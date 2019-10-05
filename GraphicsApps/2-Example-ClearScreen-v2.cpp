@@ -3,7 +3,7 @@
 #include <glad.h>							// GL header file
 #include <GLFW/glfw3.h>							// GL toolkit
 #include <stdio.h>							// printf, etc.
-#include "GLXtras.h"						// convenience routines
+#include "GLXtras.h"						// convenience routines`
 
 
 GLuint vBuffer = 0;							// GPU buf ID, valid > 0
@@ -44,7 +44,7 @@ void Display() {
     glVertexAttribPointer(id, 2, GL_FLOAT, GL_FALSE, 0, (void *) 0);
 //	in subsequent code we will replace the above three lines with
 //	VertexAttribPointer(program, "point", 2, 0, (void *) 0);
-	glDrawArrays(GL_TRIANGLES, 0, 4);		            // display entire window
+	glDrawArrays(GL_QUADS, 0, 4);	            // display entire window
 	glFlush();							            // flush GL ops
 }
 

@@ -13,28 +13,28 @@ const int WINDOW_SIZE_X = 300;
 const int WINDOW_SIZE_Y = 300;
 // vertex shader: operations before the rasterizer
 const char *vertexShader = "\
-	#version 130														\n\
-	in vec2 point;							// 2D point from GPU memory	\n\
-	void main() {														\n\
-		// REQUIREMENT 1A) transform vertex:							\n\
-		gl_Position = vec4(point, 0, 1);	// 'built-in' variable		\n\
-	}																	\n";
+	#version 130																		  \n\
+	in vec2 point;							// 2D point from GPU memory					  \n\
+	void main() {																		  \n\
+		// REQUIREMENT 1A) transform vertex:											  \n\
+		gl_Position = vec4(point, 0, 1);	// 'built-in' variable						  \n\
+	}																					  \n";
 
 // pixel shader: operations after the rasterizer
 const char *pixelShader = "\
-	#version 130														\n\
-	out vec4 pColor;													\n\
-bool isEven(float num){                                                \n\
-return mod(num, 2.0) == 0.0;                              \n\
-}                                                           \n\
-void main() {											\n\
-// REQUIREMENT 1B) shade pixel:									\n\
-vec2 point = vec2(floor(gl_FragCoord.x / 37.5), floor(gl_FragCoord.y / 37.5));\n\
-if((isEven(point.x) && isEven(point.y)) || (!isEven(point.y) && !isEven(point.x)))\n\
-pColor = vec4(0, 0, 0, 1);\n\
-else\n\
-pColor = vec4(1, 1, 1, 1);			// r, g, b, alpha			\n\
-}\n";
+	#version 130																		  \n\
+	out vec4 pColor;																	  \n\
+	bool isEven(float num){																  \n\
+		return mod(num, 2.0) == 0.0;													  \n\
+	}																					  \n\
+	void main() {																		  \n\
+		// REQUIREMENT 1B) shade pixel:													  \n\
+		vec2 point = vec2(floor(gl_FragCoord.x / 37.5),	floor(gl_FragCoord.y / 37.5));    \n\
+		if((isEven(point.x) && isEven(point.y)) || (!isEven(point.y) && !isEven(point.x)))\n\
+			pColor = vec4(0, 0, 0, 1); // black											  \n\
+		else																			  \n\
+			pColor = vec4(1, 1, 1, 1);			// r, g, b, alpha						  \n\
+	}																					  \n";
 
 void InitVertexBuffer() {
 	// REQUIREMENT 3A) create GPU buffer, copy 4 vertices

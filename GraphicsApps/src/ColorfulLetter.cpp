@@ -9,19 +9,27 @@
 GLuint vBuffer = 0;
 GLuint program = 0;
 
+struct Vertex {
+	vec2 point;
+	vec3 color;
+	Vertex(float x, float y, float r, float g, float b) : 
+		point(x, y), color(r, g, b) {}
+};
+
 // vertices
-float  points[][2] = { {-.5f,-.8f}, {-.8f,-.8f},{-.8f, .8f}, {-.5f, .8f}, 
-					   {-.5f, .13f},{.5f, .13f},{-.5f,-.13f},{ .5f,-.13f}, 
-					   { .8f,-.8f}, {.5f,-.8f}, { .5f, .8f}, { .8f, .8f}
+Vertex vertices[] = {
+	Vertex(-.5f,-.8f,  0, 0, 1), Vertex(-.8f,-.8f,  1, 0, 0),
+	Vertex(-.8f, .8f,  0, 0, 1), Vertex(-.5f, .8f,  0, 1, 0),
+	Vertex(-.5f, .13f, 0, 0, 1), Vertex( .5f, .13f, 0, 1, 0),
+	Vertex(-.5f,-.13f, 0, 0, 1), Vertex( .5f,-.13f, 1, 0, 0),
+	Vertex( .8f,-.8f,  0, 0, 1), Vertex( .5f,-.8f,  1, 0, 0),
+	Vertex( .5f, .8f,  0, 0, 1), Vertex( .8f, .8f,  0, 1, 0)
 };
-float  colors[][3] = { {0, 0, 1}, {1, 0, 0}, {0, 0, 1}, {0, 1, 0},
-					   {0, 0, 1}, {0, 1, 0}, {0, 0, 1}, {1, 0, 0},
-					   {0, 0, 1}, {1, 0, 0}, {0, 0, 1}, {0, 1, 0},
-};
+
 
 // triangles
 int triangles[][3] = {
-	{0,1,2},{2,3,0},{4,5,6},{5,6,7},{8,9,10},{10,11,8}
+	{0,1,2}, {2,3,0}, {4,5,6}, {5,6,7}, {8,9,10}, {10,11,8}
 };
 
 // shaders
@@ -50,12 +58,8 @@ void Display() {
 	// access GPU vertex buffer
     glUseProgram(program);
     glBindBuffer(GL_ARRAY_BUFFER, vBuffer);
-    // associate position input to shader with position array in vertex buffer
-	VertexAttribPointer(program, "point", 2, 0, (void *) 0);
-    // associate color input to shader with color array in vertex buffer
-	VertexAttribPointer(program, "color", 3, 0, (void *) sizeof(points));
-	// render three vertices as a triangle
-	//glDrawArrays(GL_TRIANGLES, 0, 3);
+	VertexAttribPointer(program, "point", 2, sizeof(Vertex), (void*) 0);
+	VertexAttribPointer(program, "color", 3, sizeof(Vertex), (void*) sizeof(vec2));
 	glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, triangles);
 	glFlush();
 }
@@ -64,14 +68,7 @@ void InitVertexBuffer() {
     // make GPU buffer for points & colors, set it active buffer
     glGenBuffers(1, &vBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vBuffer);
-    // allocate buffer memory to hold vertex locations and colors
-	int sPnts = sizeof(points), sCols = sizeof(colors);
-    glBufferData(GL_ARRAY_BUFFER, sPnts+sCols, NULL, GL_STATIC_DRAW);
-    // load data to the GPU
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sPnts, points);
-        // start at beginning of buffer, for length of points array
-    glBufferSubData(GL_ARRAY_BUFFER, sPnts, sCols, colors);
-        // start at end of points array, for length of colors array
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 }
 
 bool InitShader() {

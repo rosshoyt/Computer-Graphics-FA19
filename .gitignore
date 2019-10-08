@@ -1,5 +1,5 @@
 ## Custom Ignores
-[Cc]lassMaterials/
+ClassMaterials/
 
 *.vcxproj
 *.vcxproj.filters

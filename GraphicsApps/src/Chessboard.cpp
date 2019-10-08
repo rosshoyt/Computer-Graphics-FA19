@@ -5,36 +5,10 @@
 #include <stdio.h>							// printf, etc.
 #include "GLXtras.h"						// convenience routines`
 
-
 GLuint vBuffer = 0;							// GPU buf ID, valid > 0
 GLuint program = 0;						 	// shader ID, valid if > 0
 
-const int WINDOW_SIZE_X = 300;
-const int WINDOW_SIZE_Y = 300;
-// vertex shader: operations before the rasterizer
-const char *vertexShader = "\
-	#version 130																		  \n\
-	in vec2 point;							// 2D point from GPU memory					  \n\
-	void main() {																		  \n\
-		// REQUIREMENT 1A) transform vertex:											  \n\
-		gl_Position = vec4(point, 0, 1);	// 'built-in' variable						  \n\
-	}																					  \n";
-
-// pixel shader: operations after the rasterizer
-const char *pixelShader = "\
-	#version 130																		  \n\
-	out vec4 pColor;																	  \n\
-	bool isEven(float num){																  \n\
-		return mod(num, 2.0) == 0.0;													  \n\
-	}																					  \n\
-	void main() {																		  \n\
-		// REQUIREMENT 1B) shade pixel:													  \n\
-		vec2 point = vec2(floor(gl_FragCoord.x / 37.5),	floor(gl_FragCoord.y / 37.5));    \n\
-		if((isEven(point.x) && isEven(point.y)) || (!isEven(point.y) && !isEven(point.x)))\n\
-			pColor = vec4(0, 0, 0, 1); // black											  \n\
-		else																			  \n\
-			pColor = vec4(1, 1, 1, 1);			// r, g, b, alpha						  \n\
-	}																					  \n";
+GLuint shader = 0;
 
 void InitVertexBuffer() {
 	// REQUIREMENT 3A) create GPU buffer, copy 4 vertices
@@ -85,16 +59,22 @@ int main() {												// application entry
     if (!glfwInit())
         return 1;
     // create named window of given size
-    GLFWwindow *w = glfwCreateWindow(WINDOW_SIZE_X, WINDOW_SIZE_Y, "Clear to Red", NULL, NULL);
+    GLFWwindow *w = glfwCreateWindow(300, 300, "Chessboard!", NULL, NULL);
     if (!w)
 		return AppError("can't open window");
     glfwMakeContextCurrent(w);
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);	// set OpenGL extensions
     // following line will not compile unless glad.h >= OpenGLv4.3
-	//glDebugMessageCallback(GlslError, NULL);
+	glDebugMessageCallback(GlslError, NULL);
 	// REQUIREMENT 2) build shader program
-	if (!(program = LinkProgramViaCode(&vertexShader, &pixelShader)))
-        return AppError("can't link shader program");
+	
+	int v = CompileShaderViaFile("res/shaders/Chessboard-Vertex.shader", GL_VERTEX_SHADER);
+	int f = CompileShaderViaFile("res/shaders/Chessboard-Fragment.shader", GL_FRAGMENT_SHADER);
+	shader = LinkProgram(v, f);
+	if (!shader) {
+		printf("*** can't link shader program\n");
+		getchar();
+	};
     InitVertexBuffer();										// set GPU vertex memory
     glfwSetKeyCallback(w, Keyboard);
 	while (!glfwWindowShouldClose(w)) {						// event loop

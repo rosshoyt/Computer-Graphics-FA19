@@ -1,5 +1,5 @@
 ## Custom Ignores
-ClassMaterials/
+ClassMaterials/downloads
 
 *.vcxproj
 *.vcxproj.filters

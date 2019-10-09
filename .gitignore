@@ -1,5 +1,8 @@
 ## Custom Ignores
 ClassMaterials/downloads
+.DS_Store
+
+## Defaults
 
 *.vcxproj
 *.vcxproj.filters

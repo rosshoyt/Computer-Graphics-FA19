@@ -3,11 +3,16 @@
 #include <glad.h>
 #include <glfw/glfw3.h>
 #include <stdio.h>
+#include <time.h>
 #include "GLXtras.h" 
 
 // GPU identifiers
 GLuint vBuffer = 0;
 GLuint program = 0;
+
+// rotation
+time_t startTime = clock();
+static float degPerSec = 30;
 
 struct Vertex {
 	vec2 point;
@@ -42,9 +47,16 @@ const char *vertexShader = "\
 	in vec2 point;								\n\
 	in vec3 color;								\n\
 	out vec4 vColor;							\n\
+    uniform float radAng = 0;                      \n\
+    vec2 Rotate2D(vec2 v){                      \n\
+        float x2 = v.x * cos(radAng) - v.y * sin(radAng);\n\
+        float y2 = v.x * sin(radAng) + v.y * cos(radAng);\n\
+        return vec2(x2, y2);\n\
+    }                                           \n\
 	void main() {								\n\
-		gl_Position = vec4(point, 0, 1);		\n\
-	    vColor = vec4(color, 1);				\n\
+        vec2 r = Rotate2D(point);               \n\
+	    gl_Position = vec4(r, 0, 1);		    \n\
+	    vColor = vec4(color, 1);			    \n\
 	}";
 
 const char *pixelShader = "\
@@ -56,12 +68,16 @@ const char *pixelShader = "\
 	}";
 
 void Display() {
-	// clear background
-    glClearColor(1,1,1,1);
-    glClear(GL_COLOR_BUFFER_BIT);
-	// access GPU vertex buffer
+	// compute elapsed time, determine radAng, send to GPU
+	float dt = (float)(clock() - startTime) / CLOCKS_PER_SEC;
+	SetUniform(program, "radAng", (3.1415f / 180.0f) * dt * degPerSec);
+	// clear to gray, use app's shader
+	glClearColor(.5, .5, .5, 1);
+	glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(program);
-    glBindBuffer(GL_ARRAY_BUFFER, vBuffer);
+    // set vertex feed for points and colors, then draw
+	
+	glBindBuffer(GL_ARRAY_BUFFER, vBuffer);
 	VertexAttribPointer(program, "point", 2, sizeof(Vertex), (void*) 0);
 	VertexAttribPointer(program, "color", 3, sizeof(Vertex), (void*) sizeof(vec2));
 	glDrawElements(GL_TRIANGLES, 42, GL_UNSIGNED_INT, triangles);

@@ -18,18 +18,22 @@ struct Vertex {
 
 // vertices
 Vertex vertices[] = {
-	Vertex(-.5f,-.8f,  0, 0, 1), Vertex(-.8f,-.8f,  1, 0, 0),
+	Vertex(-.5f,-.8f,  0, 0, 1), Vertex(-.8f,-.8f,  1, 0, 0), // V0, V1
 	Vertex(-.8f, .8f,  0, 0, 1), Vertex(-.5f, .8f,  0, 1, 0),
 	Vertex(-.5f, .13f, 0, 0, 1), Vertex( .5f, .13f, 0, 1, 0),
-	Vertex(-.5f,-.13f, 0, 0, 1), Vertex( .5f,-.13f, 1, 0, 0),
+	Vertex(-.5f,-.13f, 0, 0, 1), Vertex( .5f,-.13f, 1, 0, 0), // V6, V7
 	Vertex( .8f,-.8f,  0, 0, 1), Vertex( .5f,-.8f,  1, 0, 0),
-	Vertex( .5f, .8f,  0, 0, 1), Vertex( .8f, .8f,  0, 1, 0)
+	Vertex( .5f, .8f,  0, 0, 1), Vertex( .8f, .8f,  0, 1, 0),
+	Vertex(-.8f,-.13f, 1, 0, 0), Vertex(-.8f, .13f, 0, 0, 1), // V12, 13 (added vertices)
+	Vertex( .8f,-.13f, 1, 0, 0), Vertex( .8f, .13f, 0, 0, 1)  // (added vertices)
 };
 
 
 // triangles
 int triangles[][3] = {
-	{0,1,2}, {2,3,0}, {4,5,6}, {5,6,7}, {8,9,10}, {10,11,8}
+	{0,1,12}, {2, 3,4}, {4,5,6}, {5,6,7},  {8, 9,7},{10,11,15},
+	{0,12,6}, {2,13,4}, {6,12,13},{6,4,13},{8,14,7},{10,15, 5},// (added triangles)
+	{7,14,15},{7,5,15}	
 };
 
 // shaders
@@ -60,7 +64,7 @@ void Display() {
     glBindBuffer(GL_ARRAY_BUFFER, vBuffer);
 	VertexAttribPointer(program, "point", 2, sizeof(Vertex), (void*) 0);
 	VertexAttribPointer(program, "color", 3, sizeof(Vertex), (void*) sizeof(vec2));
-	glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, triangles);
+	glDrawElements(GL_TRIANGLES, 42, GL_UNSIGNED_INT, triangles);
 	glFlush();
 }
 

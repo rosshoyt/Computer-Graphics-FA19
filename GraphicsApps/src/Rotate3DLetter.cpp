@@ -1,4 +1,4 @@
-// RotatingColorfulLetter.cpp
+// Rotating3DLetter.cpp
 
 #include <glad.h>
 #include <glfw/glfw3.h>
@@ -30,15 +30,15 @@ Vertex vertices[] = {
 	Vertex( .8f,-.8f,  0, 0, 1), Vertex( .5f,-.8f,  1, 0, 0),
 	Vertex( .5f, .8f,  0, 0, 1), Vertex( .8f, .8f,  0, 1, 0),
 	Vertex(-.8f,-.13f, 1, 0, 0), Vertex(-.8f, .13f, 0, 0, 1), // V12, 13 (added vertices)
-	Vertex( .8f,-.13f, 1, 0, 0), Vertex( .8f, .13f, 0, 0, 1)  
+	Vertex( .8f,-.13f, 1, 0, 0), Vertex( .8f, .13f, 0, 0, 1)  // (added vertices)
 };
 
 
 // triangles
 int triangles[][3] = {
 	{0,1,12},{2, 3,4},{4, 5, 6},{5,6, 7},{8, 9,7},{10,11,15},
-	{0,12,6},{2,13,4},{6,12,13},{6,4,13},{8,14,7},{10,15, 5}, 
-	{7,14,15},{7,5,15}										  
+	{0,12,6},{2,13,4},{6,12,13},{6,4,13},{8,14,7},{10,15, 5},// (added triangles)
+	{7,14,15},{7,5,15}	// (added)
 };
 
 // shaders
@@ -47,15 +47,9 @@ const char *vertexShader = "\
 	in vec2 point;								          \n\
 	in vec3 color;								          \n\
 	out vec4 vColor;							          \n\
-    uniform float radAng = 0;                             \n\
-    vec2 Rotate2D(vec2 v){                                \n\
-        float x2 = v.x * cos(radAng) - v.y * sin(radAng); \n\
-        float y2 = v.x * sin(radAng) + v.y * cos(radAng); \n\
-        return vec2(x2, y2);                              \n\
-    }                                                     \n\
+    uniform mat4 view;                                    \n\
 	void main() {								          \n\
-        vec2 r = Rotate2D(point);                         \n\
-	    gl_Position = vec4(r, 0, 1);		              \n\
+	    gl_Position = view*vec4(point, 0, 1);		      \n\
 	    vColor = vec4(color, 1);			              \n\
 	}";
 
@@ -69,8 +63,11 @@ const char *pixelShader = "\
 
 void Display() {
 	// compute elapsed time, determine radAng, send to GPU
+	
 	float dt = (float)(clock() - startTime) / CLOCKS_PER_SEC;
-	SetUniform(program, "radAng", (3.1415f / 180.0f) * dt * degPerSec);
+	float radAng = (3.1415f / 180.0f) * dt * degPerSec;
+	mat4 xform = RotateZ(radAng);
+	SetUniform(program, "view", xform);
 	// clear to gray, use app's shader
 	glClearColor(.5, .5, .5, 1);
 	glClear(GL_COLOR_BUFFER_BIT);

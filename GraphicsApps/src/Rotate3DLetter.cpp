@@ -1,22 +1,20 @@
 // Rotating3DLetter.cpp
-
 #include <glad.h>
 #include <glfw/glfw3.h>
 #include <stdio.h>
 #include <time.h>
 #include <VecMat.h>
 #include "GLXtras.h" 
-#include <string>
 #include "Vertex.h"
 
 // GPU identifiers
 GLuint vBuffer = 0;  
 GLuint program = 0;   
-// User input handling
-float rotSpeed = .3f;				// degree rotation per #pixels dragged by mouse
-vec2 mouseDown(0, 0);				// location of last mouse down
-vec2 rotOld(0, 0), rotNew(0, 0);	// .x is rotation about Y-axis, in degrees; .y about X-axis
 
+// user input handling
+float rotSpeed = .3f;				// deg rotation per #pixels dragged by mouse
+vec2 mouseDown(0, 0);				// location of last mouse down
+vec2 rotOld(0, 0), rotNew(0, 0);	// .x is rotation about Y-axis, in deg; .y about X-axis
 void MouseButton(GLFWwindow* w, int butn, int action, int mods) {
 	// called when mouse button pressed or released
 	if (action == GLFW_PRESS) {
@@ -41,8 +39,7 @@ void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
-
-// vertices
+// H-Letter design
 Vertex vertices[] = {
 	Vertex(-.5f,-.8f,  0, 0, 1), Vertex(-.8f,-.8f,  1, 0, 0), // V0, V1
 	Vertex(-.8f, .8f,  0, 0, 1), Vertex(-.5f, .8f,  0, 1, 0),
@@ -50,37 +47,14 @@ Vertex vertices[] = {
 	Vertex(-.5f,-.13f, 0, 0, 1), Vertex( .5f,-.13f, 1, 0, 0), // V6, V7
 	Vertex( .8f,-.8f,  0, 0, 1), Vertex( .5f,-.8f,  1, 0, 0),
 	Vertex( .5f, .8f,  0, 0, 1), Vertex( .8f, .8f,  0, 1, 0),
-	Vertex(-.8f,-.13f, 1, 0, 0), Vertex(-.8f, .13f, 0, 0, 1), // V12, 13 (added vertices)
+	Vertex(-.8f,-.13f, 1, 0, 0), Vertex(-.8f, .13f, 0, 0, 1), // V12, 13
 	Vertex( .8f,-.13f, 1, 0, 0), Vertex( .8f, .13f, 0, 0, 1) 
 };
-
-// triangles
 int triangles[][3] = {
-	{0,1,12},{2, 3,4},{4, 5, 6},{5,6, 7},{8, 9,7},{10,11,15},
-	{0,12,6},{2,13,4},{6,12,13},{6,4,13},{8,14,7},{10,15, 5},
+	{0,1, 12},{2, 3,4},{4, 5, 6},{5,6, 7},{8, 9,7},{10,11,15},
+	{0,12, 6},{2,13,4},{6,12,13},{6,4,13},{8,14,7},{10,15, 5},
 	{7,14,15},{7,5,15}
 };
-
-
-// shaders
-const char *vertexShader = "\
-	#version 130								          \n\
-	in vec2 point;								          \n\
-	in vec3 color;								          \n\
-	out vec4 vColor;							          \n\
-    uniform mat4 view;                                    \n\
-	void main() {								          \n\
-	    gl_Position = view*vec4(point, 0, 1);		      \n\
-	    vColor = vec4(color, 1);			              \n\
-	}";
-const char *pixelShader = "\
-	#version 130								          \n\
-	in vec4 vColor;								          \n\
-	out vec4 pColor;							          \n\
-	void main() {								          \n\
-        pColor = vColor;						          \n\
-	}";
-
 
 void Display() {
 	mat4 view = RotateY(rotNew.y) * RotateX(rotNew.x);
@@ -105,7 +79,9 @@ void InitVertexBuffer() {
 }
 
 bool InitShader() {
-	program = LinkProgramViaCode(&vertexShader, &pixelShader);
+	//program = LinkProgramViaCode(&vertexShader, &pixelShader);
+	program = LinkProgramViaFile("res/shaders/Rotate3DLetter_Vertex.shader",
+								 "res/shaders/Rotate3DLetter_Pixel.shader");
 	if (!program)
 		printf("can't init shader program\n");
 	return program != 0;
@@ -123,7 +99,6 @@ void Close() {
 
 int main() {
 	glfwSetErrorCallback(ErrorGFLW);
-	
     if (!glfwInit())
         return 1;
     GLFWwindow *window = glfwCreateWindow(600, 600, "Colorful Letter", NULL, NULL);
@@ -133,15 +108,14 @@ int main() {
     }
 	glfwSetMouseButtonCallback(window, MouseButton);
 	glfwSetCursorPosCallback(window, MouseMove);
-    glfwMakeContextCurrent(window);
+	glfwSetKeyCallback(window, Keyboard);
+	glfwMakeContextCurrent(window);
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
     printf("GL version: %s\n", glGetString(GL_VERSION));
     PrintGLErrors();
 	if (!InitShader())
         return 0;
     InitVertexBuffer();
-    //glfwSetKeyCallback(window, Keyboard);
-	
 	while (!glfwWindowShouldClose(window)) {
 		Display();
 		glfwSwapBuffers(window);

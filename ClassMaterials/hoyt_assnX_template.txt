@@ -1,0 +1,38 @@
+Name document <your last name>-assnX.doc (or .pdf)
+Not to exceed two pages.
+
+Assignment # (Exercise X.X)
+
+Ross C. Hoyt
+
+Oct. X, 2019
+
+Assignment Objective:
+
+How achieved in the code (include code excerpt(s)):
+
+Resulting and any related image(s):
+
+
+
+Example Summary:
+Assignment X 
+
+John A. Student
+
+Oct. 1, 2019
+
+
+Objective: modify Example-ClearScreen-v2.cpp so that it clears the window to red, not green.
+
+How Achieved
+
+        The pixel shader assignment
+             pColor = vec4(0, 1, 0, 1);
+        was changed to
+  pColor = vec4(1, 0, 0, 1);
+
+        The app title was changed in the call to glfwCreateWindow.
+
+Result
+[Photo of program]

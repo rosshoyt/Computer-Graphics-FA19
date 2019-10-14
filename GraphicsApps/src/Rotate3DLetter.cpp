@@ -7,18 +7,15 @@
 #include <VecMat.h>
 #include "GLXtras.h" 
 #include <string>
+#include "Vertex.h"
 
 // GPU identifiers
 GLuint vBuffer = 0;  
 GLuint program = 0;   
-
-time_t startTime = clock();
-static float degPerSec = 30;
-
-// Mouse Control
-vec2 mouseDown(0, 0);            // location of last mouse down
-vec2 rotOld(0, 0), rotNew(0, 0); // .x is rotation about Y-axis, in degrees; .y about X-axis
-float rotSpeed = .3f;            // degree rotation per #pixels dragged by mouse
+// User input handling
+float rotSpeed = .3f;				// degree rotation per #pixels dragged by mouse
+vec2 mouseDown(0, 0);				// location of last mouse down
+vec2 rotOld(0, 0), rotNew(0, 0);	// .x is rotation about Y-axis, in degrees; .y about X-axis
 
 void MouseButton(GLFWwindow* w, int butn, int action, int mods) {
 	// called when mouse button pressed or released
@@ -27,40 +24,23 @@ void MouseButton(GLFWwindow* w, int butn, int action, int mods) {
 		double x, y;
 		glfwGetCursorPos(w, &x, &y);
 		mouseDown = vec2((float)x, (float)y);
-		OutputDebugString("Mouse Button pressed... ");
-
 	}
-	if (action == GLFW_RELEASE) {
+	if (action == GLFW_RELEASE)
 		//save reference rotation
 		rotOld = rotNew;
-		OutputDebugString("Released. \n");
-	}
 }
-
 void MouseMove(GLFWwindow* w, double x, double y) {
-
-	//char msgbuf[4096], * p = msgbuf;
-	//sprintf(msgbuf, "Mouse moved: x = %d\n", mouseDown.x);
-	//OutputDebugString(msgbuf);
-
 	if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
 		// compute mouse drag difference, update rotation
 		vec2 dif((float)x - mouseDown.x, (float)y - mouseDown.y);
 		rotNew = rotOld + rotSpeed * dif;
-
-		
 	}
 }
+void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE)
+		glfwSetWindowShouldClose(window, GLFW_TRUE);
+}
 
-
-
-
-struct Vertex {
-	vec2 point;
-	vec3 color;
-	Vertex(float x, float y, float r, float g, float b) : 
-		point(x, y), color(r, g, b) {}
-};
 
 // vertices
 Vertex vertices[] = {
@@ -74,13 +54,13 @@ Vertex vertices[] = {
 	Vertex( .8f,-.13f, 1, 0, 0), Vertex( .8f, .13f, 0, 0, 1) 
 };
 
-
 // triangles
 int triangles[][3] = {
 	{0,1,12},{2, 3,4},{4, 5, 6},{5,6, 7},{8, 9,7},{10,11,15},
 	{0,12,6},{2,13,4},{6,12,13},{6,4,13},{8,14,7},{10,15, 5},
 	{7,14,15},{7,5,15}
 };
+
 
 // shaders
 const char *vertexShader = "\
@@ -93,7 +73,6 @@ const char *vertexShader = "\
 	    gl_Position = view*vec4(point, 0, 1);		      \n\
 	    vColor = vec4(color, 1);			              \n\
 	}";
-
 const char *pixelShader = "\
 	#version 130								          \n\
 	in vec4 vColor;								          \n\
@@ -104,21 +83,13 @@ const char *pixelShader = "\
 
 
 void Display() {
-	// compute elapsed time, determine radAng, send to GPU
-	//float radAng = (3.1415f / 180.0f);
-	//float radAng =  * dt * degPerSec;	
-	//mat4 xform = RotateZ(radAng);
-	//SetUniform(program, "view", xform);  
-	
 	mat4 view = RotateY(rotNew.y) * RotateX(rotNew.x);
 	SetUniform(program, "view", view);
-
 	// clear to gray, use app's shader
 	glClearColor(.5, .5, .5, 1);
 	glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(program);
     // set vertex feed for points and colors, then draw
-	
 	glBindBuffer(GL_ARRAY_BUFFER, vBuffer);
 	VertexAttribPointer(program, "point", 2, sizeof(Vertex), (void*) 0);
 	VertexAttribPointer(program, "color", 3, sizeof(Vertex), (void*) sizeof(vec2));
@@ -138,13 +109,6 @@ bool InitShader() {
 	if (!program)
 		printf("can't init shader program\n");
 	return program != 0;
-}
-
-// application
-
-void Keyboard(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE)
-		glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
 void ErrorGFLW(int id, const char *reason) {

@@ -4,15 +4,56 @@
 #include <glfw/glfw3.h>
 #include <stdio.h>
 #include <time.h>
+#include <VecMat.h>
 #include "GLXtras.h" 
+#include <string>
 
 // GPU identifiers
-GLuint vBuffer = 0;
-GLuint program = 0;
+GLuint vBuffer = 0;  
+GLuint program = 0;   
 
-// rotation
 time_t startTime = clock();
 static float degPerSec = 30;
+
+// Mouse Control
+vec2 mouseDown(0, 0);            // location of last mouse down
+vec2 rotOld(0, 0), rotNew(0, 0); // .x is rotation about Y-axis, in degrees; .y about X-axis
+float rotSpeed = .3f;            // degree rotation per #pixels dragged by mouse
+
+void MouseButton(GLFWwindow* w, int butn, int action, int mods) {
+	// called when mouse button pressed or released
+	if (action == GLFW_PRESS) {
+		// save reference for MouseDrag
+		double x, y;
+		glfwGetCursorPos(w, &x, &y);
+		mouseDown = vec2((float)x, (float)y);
+		OutputDebugString("Mouse Button pressed... ");
+
+	}
+	if (action == GLFW_RELEASE) {
+		//save reference rotation
+		rotOld = rotNew;
+		OutputDebugString("Released. \n");
+	}
+}
+
+void MouseMove(GLFWwindow* w, double x, double y) {
+
+	//char msgbuf[4096], * p = msgbuf;
+	//sprintf(msgbuf, "Mouse moved: x = %d\n", mouseDown.x);
+	//OutputDebugString(msgbuf);
+
+	if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+		// compute mouse drag difference, update rotation
+		vec2 dif((float)x - mouseDown.x, (float)y - mouseDown.y);
+		rotNew = rotOld + rotSpeed * dif;
+
+		
+	}
+}
+
+
+
 
 struct Vertex {
 	vec2 point;
@@ -30,15 +71,15 @@ Vertex vertices[] = {
 	Vertex( .8f,-.8f,  0, 0, 1), Vertex( .5f,-.8f,  1, 0, 0),
 	Vertex( .5f, .8f,  0, 0, 1), Vertex( .8f, .8f,  0, 1, 0),
 	Vertex(-.8f,-.13f, 1, 0, 0), Vertex(-.8f, .13f, 0, 0, 1), // V12, 13 (added vertices)
-	Vertex( .8f,-.13f, 1, 0, 0), Vertex( .8f, .13f, 0, 0, 1)  // (added vertices)
+	Vertex( .8f,-.13f, 1, 0, 0), Vertex( .8f, .13f, 0, 0, 1) 
 };
 
 
 // triangles
 int triangles[][3] = {
 	{0,1,12},{2, 3,4},{4, 5, 6},{5,6, 7},{8, 9,7},{10,11,15},
-	{0,12,6},{2,13,4},{6,12,13},{6,4,13},{8,14,7},{10,15, 5},// (added triangles)
-	{7,14,15},{7,5,15}	// (added)
+	{0,12,6},{2,13,4},{6,12,13},{6,4,13},{8,14,7},{10,15, 5},
+	{7,14,15},{7,5,15}
 };
 
 // shaders
@@ -61,13 +102,17 @@ const char *pixelShader = "\
         pColor = vColor;						          \n\
 	}";
 
+
 void Display() {
 	// compute elapsed time, determine radAng, send to GPU
+	//float radAng = (3.1415f / 180.0f);
+	//float radAng =  * dt * degPerSec;	
+	//mat4 xform = RotateZ(radAng);
+	//SetUniform(program, "view", xform);  
 	
-	float dt = (float)(clock() - startTime) / CLOCKS_PER_SEC;
-	float radAng = (3.1415f / 180.0f) * dt * degPerSec;
-	mat4 xform = RotateZ(radAng);
-	SetUniform(program, "view", xform);
+	mat4 view = RotateY(rotNew.y) * RotateX(rotNew.x);
+	SetUniform(program, "view", view);
+
 	// clear to gray, use app's shader
 	glClearColor(.5, .5, .5, 1);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -113,28 +158,32 @@ void Close() {
 }
 
 int main() {
-    glfwSetErrorCallback(ErrorGFLW);
+	glfwSetErrorCallback(ErrorGFLW);
+	
     if (!glfwInit())
         return 1;
-    GLFWwindow *w = glfwCreateWindow(600, 600, "Colorful Letter", NULL, NULL);
-    if (!w) {
+    GLFWwindow *window = glfwCreateWindow(600, 600, "Colorful Letter", NULL, NULL);
+    if (!window) {
         glfwTerminate();
         return 1;
     }
-    glfwMakeContextCurrent(w);
+	glfwSetMouseButtonCallback(window, MouseButton);
+	glfwSetCursorPosCallback(window, MouseMove);
+    glfwMakeContextCurrent(window);
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
     printf("GL version: %s\n", glGetString(GL_VERSION));
     PrintGLErrors();
 	if (!InitShader())
         return 0;
     InitVertexBuffer();
-    glfwSetKeyCallback(w, Keyboard);
-	while (!glfwWindowShouldClose(w)) {
+    //glfwSetKeyCallback(window, Keyboard);
+	
+	while (!glfwWindowShouldClose(window)) {
 		Display();
-		glfwSwapBuffers(w);
+		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
  	Close();
-	glfwDestroyWindow(w);
+	glfwDestroyWindow(window);
     glfwTerminate();
 }

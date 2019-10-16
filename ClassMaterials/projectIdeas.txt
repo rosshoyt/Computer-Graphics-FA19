@@ -1,0 +1,12 @@
+Project ideas
+My ideas
+Simple terrain Landscape with trees and good lighting
+    could have looping score
+    could have sound effects attached to in game objects
+    ** checkout playSound()
+Other peoples ideas
+Portal illumination
+volumetric
+fractals
+character animation
+screensaver

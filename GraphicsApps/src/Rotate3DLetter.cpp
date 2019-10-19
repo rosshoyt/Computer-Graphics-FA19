@@ -6,6 +6,7 @@
 #include <VecMat.h>
 #include "GLXtras.h" 
 #include "Vertex.h"
+#include <stdlib.h>
 
 // GPU identifiers
 GLuint vBuffer = 0;  
@@ -16,7 +17,8 @@ float rotSpeed = .3f;               // deg rotation per #pixels dragged by mouse
 vec2 mouseDown(0, 0);               // location of last mouse down
 vec2 rotOld(0, 0), rotNew(0, 0);    // .x is rotation about Y-axis, in deg; .y about X-axis
 vec2 tranOld(0, 0), tranNew(0, 0);	// translation variables
-float tranSpeed = .01f;
+float tranSpeed = .01f; 
+double wheelRotation = 0.0f;
 void MouseButton(GLFWwindow* w, int butn, int action, int mods) {
     // called when mouse button pressed or released
     if (action == GLFW_PRESS) {
@@ -41,6 +43,20 @@ void MouseMove(GLFWwindow* w, double x, double y) {
 		else
 			rotNew = rotOld + rotSpeed * dif;
     }
+}
+void MouseWheel(GLFWwindow* w, double xoffset, double yoffset) {
+	// xoffset is amount of wheel rotation
+	//if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {}
+	//wheelRotation = xoffset;
+	
+	//std::ostringstream ss;
+	//ss << 2.5;
+	
+	
+	//snprintf(msgbuf, 512, "Xoffset: %lf Yoffset: %lf", xoffset, direction);
+	printf("X offset: %f", xoffset);
+	printf("Y offset: %f\n", yoffset);
+	
 }
 void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE)
@@ -115,6 +131,7 @@ int main() {
     }
     glfwSetMouseButtonCallback(window, MouseButton);
     glfwSetCursorPosCallback(window, MouseMove);
+	glfwSetScrollCallback(window, MouseWheel);
     glfwSetKeyCallback(window, Keyboard);
     glfwMakeContextCurrent(window);
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);

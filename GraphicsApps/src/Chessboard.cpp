@@ -67,14 +67,12 @@ int main() {												// application entry
     // following line will not compile unless glad.h >= OpenGLv4.3
 	glDebugMessageCallback(GlslError, NULL);
 	// REQUIREMENT 2) build shader program
+	program = LinkProgramViaFile("res/shaders/Chessboard-Vertex.shader", "res/shaders/Chessboard-Fragment.shader");
+	if (!program) {
+		printf("can't init shader program\n");
+		return 0;
+	}
 	
-	int v = CompileShaderViaFile("res/shaders/Chessboard-Vertex.shader", GL_VERTEX_SHADER);
-	int f = CompileShaderViaFile("res/shaders/Chessboard-Fragment.shader", GL_FRAGMENT_SHADER);
-	shader = LinkProgram(v, f);
-	if (!shader) {
-		printf("*** can't link shader program\n");
-		getchar();
-	};
     InitVertexBuffer();										// set GPU vertex memory
     glfwSetKeyCallback(w, Keyboard);
 	while (!glfwWindowShouldClose(w)) {						// event loop

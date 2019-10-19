@@ -1,4 +1,4 @@
-// Rotating3DLetter.cpp
+// CubePersp.cpp
 #include <glad.h>
 #include <glfw/glfw3.h>
 #include <stdio.h>
@@ -15,6 +15,7 @@ GLuint program = 0;
 float rotSpeed = .3f;               // deg rotation per #pixels dragged by mouse
 vec2 mouseDown(0, 0);               // location of last mouse down
 vec2 rotOld(0, 0), rotNew(0, 0);    // .x is rotation about Y-axis, in deg; .y about X-axis
+
 void MouseButton(GLFWwindow* w, int butn, int action, int mods) {
     // called when mouse button pressed or released
     if (action == GLFW_PRESS) {
@@ -39,22 +40,12 @@ void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
-// H-Letter design
-Vertex vertices[] = {
-    Vertex(-.5f,-.8f,  0, 0, 1), Vertex(-.8f,-.8f,  1, 0, 0), // V0, V1
-    Vertex(-.8f, .8f,  0, 0, 1), Vertex(-.5f, .8f,  0, 1, 0),
-    Vertex(-.5f, .13f, 0, 0, 1), Vertex( .5f, .13f, 0, 1, 0),
-    Vertex(-.5f,-.13f, 0, 0, 1), Vertex( .5f,-.13f, 1, 0, 0), // V6, V7
-    Vertex( .8f,-.8f,  0, 0, 1), Vertex( .5f,-.8f,  1, 0, 0),
-    Vertex( .5f, .8f,  0, 0, 1), Vertex( .8f, .8f,  0, 1, 0),
-    Vertex(-.8f,-.13f, 1, 0, 0), Vertex(-.8f, .13f, 0, 0, 1), // V12, 13
-    Vertex( .8f,-.13f, 1, 0, 0), Vertex( .8f, .13f, 0, 0, 1) 
-};
-int triangles[][3] = {
-    {0,  1, 12}, {2,  3,  4}, {4,  5,  6}, {5, 6,  7}, {8,  9, 7}, {10, 11, 15}, 
-    {0, 12,  6}, {2, 13,  4}, {6, 12, 13}, {6, 4, 13}, {8, 14, 7}, {10, 15,  5}, 
-    {7, 14, 15}, {7,  5, 15}
-};
+// Cube
+float l = -1, r = 1, b = -1, t = 1, n = -1, f = 1; // left, right, bottom, top, near, far
+float points[][3] = { {l,b,n},{l,b,f},{l,t,n},{l,t,f},{r,b,n},{r,b,f},{r,t,n},{r,t,f} }; // 8 point
+float colors[][3] = { {0,0,1},{0,1,0},{0,1,1},{1,0,0},{1,0,1},{1,1,0},{0,0,0},{1,1,1} }; // 8 colors
+int faces[][4] = { {1,3,2,0}, {6,7,5,4}, {4,5,1,0}, {3,7,6,2}, {2,6,4,0}, {5,7,3,1} }; // 6 faces
+float fieldOfView = 30, cubeSize = .05f, cubeStretch = cubeSize;
 
 void Display() {
     mat4 view = RotateY(rotNew.y) * RotateX(rotNew.x);

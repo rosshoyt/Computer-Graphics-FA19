@@ -15,6 +15,7 @@ GLuint program = 0;
 float rotSpeed = .3f;               // deg rotation per #pixels dragged by mouse
 vec2 mouseDown(0, 0);               // location of last mouse down
 vec2 rotOld(0, 0), rotNew(0, 0);    // .x is rotation about Y-axis, in deg; .y about X-axis
+
 void MouseButton(GLFWwindow* w, int butn, int action, int mods) {
     // called when mouse button pressed or released
     if (action == GLFW_PRESS) {

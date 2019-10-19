@@ -15,6 +15,8 @@ GLuint program = 0;
 float rotSpeed = .3f;               // deg rotation per #pixels dragged by mouse
 vec2 mouseDown(0, 0);               // location of last mouse down
 vec2 rotOld(0, 0), rotNew(0, 0);    // .x is rotation about Y-axis, in deg; .y about X-axis
+vec2 tranOld(0, 0), tranNew(0, 0);	// translation variables
+float tranSpeed = .01f;
 void MouseButton(GLFWwindow* w, int butn, int action, int mods) {
     // called when mouse button pressed or released
     if (action == GLFW_PRESS) {
@@ -23,15 +25,21 @@ void MouseButton(GLFWwindow* w, int butn, int action, int mods) {
         glfwGetCursorPos(w, &x, &y);
         mouseDown = vec2((float)x, (float)y);
     }
-    if (action == GLFW_RELEASE)
-        // save reference rotation
-        rotOld = rotNew;
+	if (action == GLFW_RELEASE) {
+		// save reference rotation
+		rotOld = rotNew;
+		tranOld = tranNew;
+	}
 }
 void MouseMove(GLFWwindow* w, double x, double y) {
     if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-        // compute mouse drag difference, update rotation
-        vec2 dif((float)x - mouseDown.x, (float)y - mouseDown.y);
-        rotNew = rotOld + rotSpeed * dif;
+		vec2 mouse((float)x, (float)y), dif = mouse - mouseDown;
+		bool shift = glfwGetKey(w, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+					 glfwGetKey(w, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
+		if (shift)
+			tranNew = tranOld + tranSpeed * vec2(dif.x, -dif.y);
+		else
+			rotNew = rotOld + rotSpeed * dif;
     }
 }
 void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -57,7 +65,7 @@ int triangles[][3] = {
 };
 
 void Display() {
-    mat4 view = RotateY(rotNew.y) * RotateX(rotNew.x);
+    mat4 view = Translate(tranNew.x,tranNew.y, 0) * RotateY(rotNew.x) * RotateX(rotNew.y);
     SetUniform(program, "view", view);
     // clear to gray, use app's shader
     glClearColor(.5, .5, .5, 1);
@@ -79,8 +87,8 @@ void InitVertexBuffer() {
 }
 
 bool InitShader() { 
-    program = LinkProgramViaFile("res/shaders/Rotate3DLetter_Vertex.shader",
-                                 "res/shaders/Rotate3DLetter_Pixel.shader");
+    program = LinkProgramViaFile("res/shaders/Rotate3DLetter-Vertex.shader",
+                                 "res/shaders/Rotate3DLetter-Pixel.shader");
     if (!program)
         printf("can't init shader program\n");
     return program != 0;
@@ -100,7 +108,7 @@ int main() {
     glfwSetErrorCallback(ErrorGFLW);
     if (!glfwInit())
         return 1;
-    GLFWwindow *window = glfwCreateWindow(600, 600, "Colorful Letter", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(600, 600, "Rotate3DLetter", NULL, NULL);
     if (!window) {
         glfwTerminate();
         return 1;

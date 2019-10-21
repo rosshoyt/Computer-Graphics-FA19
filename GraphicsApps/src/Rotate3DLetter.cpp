@@ -14,15 +14,14 @@ GLuint program = 0;
 
 // user input handling
 float rotSpeed = .3f;               // deg rotation per #pixels dragged by mouse
-vec2 mouseDown(0, 0);               // location of last mouse down
-vec2 rotOld(0, 0), rotNew(0, 0);    // .x is rotation about Y-axis, in deg; .y about X-axis
+vec2 mouseDown(0, 0);               // location of last mouse down	 
+vec3 rotOld(0, 0, 0), rotNew(0, 0, 0);    // .x is rotation about Y-axis, in deg; .y about X-axis
 vec2 tranOld(0, 0), tranNew(0, 0);	// translation variables
 float tranSpeed = .01f; 
-double wheelRotation = 0.0f;
 void MouseButton(GLFWwindow* w, int butn, int action, int mods) {
     // called when mouse button pressed or released
     if (action == GLFW_PRESS) {
-        // save reference for MouseDrag
+        // save reference for MouseMove
         double x, y;
         glfwGetCursorPos(w, &x, &y);
         mouseDown = vec2((float)x, (float)y);
@@ -35,28 +34,27 @@ void MouseButton(GLFWwindow* w, int butn, int action, int mods) {
 }
 void MouseMove(GLFWwindow* w, double x, double y) {
     if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-		vec2 mouse((float)x, (float)y), dif = mouse - mouseDown;
+		vec2 mouse((float)x, (float)y);
+		vec2 dif = mouse - mouseDown;
+		
 		bool shift = glfwGetKey(w, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
 					 glfwGetKey(w, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
 		if (shift)
 			tranNew = tranOld + tranSpeed * vec2(dif.x, -dif.y);
-		else
-			rotNew = rotOld + rotSpeed * dif;
+		else {
+			vec3 dif3D(dif, 1);
+			rotNew = rotOld + rotSpeed * dif3D;
+			printf("MOUSEMOVE: RotNew X: %.0f Y: %.0f Z: %.0f\n", rotNew.x, rotNew.y, rotNew.z);
+		}
+			
     }
 }
+// mouse wheel rotation
+static float degPerSec = 30;
+static double mouseWheelScalar = 2;
 void MouseWheel(GLFWwindow* w, double xoffset, double yoffset) {
-	// xoffset is amount of wheel rotation
-	//if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {}
-	//wheelRotation = xoffset;
-	
-	//std::ostringstream ss;
-	//ss << 2.5;
-	
-	
-	//snprintf(msgbuf, 512, "Xoffset: %lf Yoffset: %lf", xoffset, direction);
-	printf("X offset: %f", xoffset);
-	printf("Y offset: %f\n", yoffset);
-	
+	rotNew.z = rotNew.z + (yoffset + xoffset) * mouseWheelScalar;
+	printf("MOUSEWHEEL: RotNew X: %.0f Y: %.0f Z: %.0f\n", rotNew.x, rotNew.y, rotNew.z);
 }
 void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE)
@@ -81,7 +79,8 @@ int triangles[][3] = {
 };
 
 void Display() {
-    mat4 view = Translate(tranNew.x,tranNew.y, 0) * RotateY(rotNew.x) * RotateX(rotNew.y);
+    mat4 view = Translate(tranNew.x,tranNew.y, 0) * RotateY(rotNew.x) * RotateX(rotNew.y) * RotateZ(rotNew.z);
+
     SetUniform(program, "view", view);
     // clear to gray, use app's shader
     glClearColor(.5, .5, .5, 1);

@@ -4,32 +4,48 @@
 #include <stdio.h>
 #include <time.h>
 #include <VecMat.h>
-#include <stdlib.h>
 #include "GLXtras.h" 
 #include "Vertex.h"
-#include "Camera.h"
+#include <stdlib.h>
 
 // GPU identifiers
 GLuint vBuffer = 0;  
 GLuint program = 0;   
 
-int winWidth =  500, winHeight = 500;
-Camera camera(winWidth / 2, winHeight, vec3(0, 0, 0), vec3(0, 0, -1), (float)30);
-
+// user input handling
+float rotSpeed = .3f;                     // deg rotation per #pixels dragged by mouse
+vec2 mouseDown(0, 0);                     // location of last mouse down	 
+vec3 rotOld(0, 0, 0), rotNew(0, 0, 0);    // .x is rotation about Y-axis, in deg; .y about X-axis
+vec3 tranOld(0, 0,0), tranNew(0, 0,-1);	  // old/new translate
+float tranSpeed = .01f; 
 void MouseButton(GLFWwindow* w, int butn, int action, int mods) {
+    // called when mouse button pressed or released
     if (action == GLFW_PRESS) {
+        // save reference for MouseMove
         double x, y;
         glfwGetCursorPos(w, &x, &y);
-		camera.MouseDown(x, y);
-    } else if (action == GLFW_RELEASE)
-		camera.MouseUp();
+        mouseDown = vec2((float)x, (float)y);
+    }
+	if (action == GLFW_RELEASE) {
+		// save reference rotation
+		rotOld = rotNew;
+		tranOld = tranNew;
+	}
 }
 void MouseMove(GLFWwindow* w, double x, double y) {
-	if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-		camera.MouseMove(x, y);
+	if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+		vec2 mouse((float)x, (float)y);
+		vec2 dif = mouse - mouseDown;
+		rotNew = rotOld + rotSpeed * vec3(dif, 1);
+		//printf("MOUSEMOVE: RotNew X: %.0f Y: %.0f Z: %.0f\n", rotNew.x, rotNew.y, rotNew.z);
+    }
 }
+// mouse wheel rotation
+static float degPerSec = 30;
+static double mouseWheelScalar = 2;
 void MouseWheel(GLFWwindow* w, double xoffset, double yoffset) {
-	camera.MouseWheel(xoffset, yoffset);
+	tranNew.z += (yoffset + xoffset) * .25; //* mouseWheelScalar;
+	//printf("MOUSEWHEEL: RotNew X: %.0f Y: %.0f Z: %.0f\n", rotNew.x, rotNew.y, rotNew.z);
 }
 void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE)
@@ -57,7 +73,10 @@ void Display(GLFWwindow *w) {
 	float nearDistance = .001f, farDistance = 500;
 	mat4 persp = Perspective(fieldOfView, aspectRatio, nearDistance, farDistance);
 
-	mat4 modelview = camera.fullview() * Scale(cubeSize, cubeSize, cubeStretch);
+	mat4 scale = Scale(cubeSize, cubeSize, cubeStretch);
+	mat4 rot = RotateY(rotNew.x) * RotateX(rotNew.y);
+	mat4 tran = Translate(tranNew);
+	mat4 modelview = tran * rot * scale;
 	mat4 view = persp * modelview;
 	SetUniform(program, "view", view);
 
@@ -87,8 +106,8 @@ void InitVertexBuffer() {
 }
 
 bool InitShader() { 
-    program = LinkProgramViaFile("res/shaders/CubePersp-Vertex.shader",
-                                 "res/shaders/CubePersp-Pixel.shader");
+    program = LinkProgramViaFile("res/shaders/CubePersp_ex7-6-Vertex.shader",
+                                 "res/shaders/CubePersp_ex7-6-Pixel.shader");
     if (!program)
         printf("can't init shader program\n");
     return program != 0;

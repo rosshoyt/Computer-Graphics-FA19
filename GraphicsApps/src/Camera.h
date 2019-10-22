@@ -2,7 +2,6 @@
 #define CAMERA_H
 #include <VecMat.h>
 
-
 class Camera {
 private:	
 	int width, height;
@@ -10,20 +9,23 @@ private:
 	vec3 rotOld, rotNew;     // .x is rotation about Y-axis, in deg; .y about X-axis
 	vec3 tranOld, tranNew;	 // old/new translate
 	vec2 mouseDown;          // location of last mouse down
-	float rotSpeed = .3f;    // deg rotation per #pixels dragged by mouse
-	float tranSpeed = .01f;
+	float nearDistance = .001f, farDistance = 500;
+	float rotSpeed = .3f, tranSpeed = .01f;
 public:
 	Camera(int width, int height, vec3 rot, vec3 trans, float fov) :
 		width(width), height(height), fov(fov),
 		rotOld(0, 0, 0), rotNew(rot), tranOld(0, 0, 0), tranNew(trans),
 		mouseDown(0,0)
-		
 	{}
-	
+	void setWindowDim(int width, int height) {
+		this->width = width, this->height = height;
+	}
 	mat4 fullview() {
+		float aspectRatio = (float)width / (float)height;
+		mat4 persp = Perspective(fov, aspectRatio, nearDistance, farDistance);
 		mat4 rot = RotateY(rotNew.x) * RotateX(rotNew.y);
 		mat4 tran = Translate(tranNew);
-		return tran * rot;
+		return persp * tran * rot;
 	}
 	void MouseDown(int x, int y) {
 		mouseDown = vec2((float)x, (float)y);
@@ -41,10 +43,5 @@ public:
 	void MouseWheel(double xoffset, double yoffset) {
 		tranNew.z += (yoffset + xoffset) * .25; // scales mouse wheel values
 	}
-
 };
- 
-
-
-
 #endif // !CAMERA

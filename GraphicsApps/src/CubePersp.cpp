@@ -13,8 +13,8 @@
 GLuint vBuffer = 0;  
 GLuint program = 0;   
 
-int winWidth =  500, winHeight = 500;
-Camera camera(winWidth / 2, winHeight, vec3(0, 0, 0), vec3(0, 0, -1), (float)30);
+int initialWinWidth =  500, initialWinHeight = 500;
+Camera camera(initialWinWidth / 2, initialWinHeight, vec3(0, 0, 0), vec3(0, 0, -1), (float)30);
 
 void MouseButton(GLFWwindow* w, int butn, int action, int mods) {
     if (action == GLFW_PRESS) {
@@ -36,36 +36,27 @@ void Keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
-// H-Letter design
+// Cube
 float l = -1, r = 1, b = -1, t = 1, n = -1, f = 1;
 float points[][3] = { {l,b,n},{l,b,f},{l,t,n},{l,t,f},{r,b,n},{r,b,f},{r,t,n},{r,t,f} };
 float colors[][3] = { {0,0,1},{0,1,0},{0,1,1},{1,0,0},{1,0,1},{1,1,0},{0,0,0},{1,1,1} };
 int faces[][4] = { {1,3,2,0},{6,7,5,4},{4,5,1,0},{3,7,6,2},{2,6,4,0},{5,7,3,1} };
-float fieldOfView = 30, cubeSize = .05f, cubeStretch = cubeSize;
-
+float cubeSize = .05f, cubeStretch = cubeSize;
 
 void Display(GLFWwindow *w) {
-
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 
 	int screenWidth, screenHeight;
 	glfwGetWindowSize(w, &screenWidth, &screenHeight);
-
 	int halfWidth = screenWidth / 2;
-	float aspectRatio = (float)halfWidth / (float)screenHeight;
-	float nearDistance = .001f, farDistance = 500;
-	mat4 persp = Perspective(fieldOfView, aspectRatio, nearDistance, farDistance);
-
-	mat4 modelview = camera.fullview() * Scale(cubeSize, cubeSize, cubeStretch);
-	mat4 view = persp * modelview;
-	SetUniform(program, "view", view);
-
+	camera.setWindowDim(halfWidth, screenHeight);
+	mat4 m = camera.fullview() * Scale(cubeSize, cubeSize, cubeStretch);
+	SetUniform(program, "view", m);
     // clear to gray, use app's shader
     glClearColor(.5, .5, .5, 1);
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(program);
-    // set vertex feed for points and colors, then draw
     glBindBuffer(GL_ARRAY_BUFFER, vBuffer);
 	VertexAttribPointer(program, "point", 3, 0, (void*)0);
 	VertexAttribPointer(program, "color", 3, 0, (void*)0);
@@ -87,7 +78,7 @@ void InitVertexBuffer() {
 }
 
 bool InitShader() { 
-    program = LinkProgramViaFile("res/shaders/CubePersp-Vertex.shader",
+    program = LinkProgramViaFile("res/shaders/CubePersp-Vertex.shader", 
                                  "res/shaders/CubePersp-Pixel.shader");
     if (!program)
         printf("can't init shader program\n");
@@ -108,7 +99,7 @@ int main() {
     glfwSetErrorCallback(ErrorGFLW);
     if (!glfwInit())
         return 1;
-    GLFWwindow *window = glfwCreateWindow(600, 600, "Rotate3DLetter", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(600, 600, "Ex 8.4: Cube Persp", NULL, NULL);
     if (!window) {
         glfwTerminate();
         return 1;

@@ -106,8 +106,8 @@ void InitVertexBuffer() {
 }
 
 bool InitShader() { 
-    program = LinkProgramViaFile("res/shaders/CubePersp_ex7-6-Vertex.shader",
-                                 "res/shaders/CubePersp_ex7-6-Pixel.shader");
+    program = LinkProgramViaFile("res/shaders/CubePersp-Vertex.shader",
+                                 "res/shaders/CubePersp-Pixel.shader");
     if (!program)
         printf("can't init shader program\n");
     return program != 0;

@@ -1,5 +1,5 @@
 ## Custom Ignores
-ClassMaterials/downloads
+ClassMaterials/downloads/
 .DS_Store
 
 ## Defaults

@@ -156,9 +156,9 @@ GLuint LinkProgramViaCode(const char **vertexCode, const char **pixelCode) {
 
 GLuint LinkProgramViaCode(const char **vertexCode, const char **tessellationControlCode, const char **tessellationEvalCode, const char **geometryCode, const char **pixelCode) {
 	GLuint vshader = CompileShaderViaCode(vertexCode, GL_VERTEX_SHADER);
-	
-	GLuint tcshader = 0;//tessellationControlCode? CompileShaderViaCode(tessellationControlCode, GL_TESS_CONTROL_SHADER) : 0;
-	GLuint teshader = 0;//tessellationEvalCode? CompileShaderViaCode(tessellationEvalCode, GL_TESS_EVALUATION_SHADER) : 0;
+	// TODO remove 2 following comments and set tcshader/te shader = tessellation<>Code()?
+	GLuint tcshader = tessellationControlCode? CompileShaderViaCode(tessellationControlCode, GL_TESS_CONTROL_SHADER) : 0;
+	GLuint teshader = tessellationEvalCode? CompileShaderViaCode(tessellationEvalCode, GL_TESS_EVALUATION_SHADER) : 0;
 	
 	GLuint gshader = geometryCode? CompileShaderViaCode(geometryCode, GL_GEOMETRY_SHADER) : 0;
 	GLuint pshader = CompileShaderViaCode(pixelCode, GL_FRAGMENT_SHADER);

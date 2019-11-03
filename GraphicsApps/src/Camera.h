@@ -21,11 +21,16 @@ public:
 		this->width = width, this->height = height;
 	}
 	mat4 fullview() {
-		float aspectRatio = (float)width / (float)height;
-		mat4 persp = Perspective(fov, aspectRatio, nearDistance, farDistance);
+		return persp() * modelview();
+	}
+	mat4 modelview() {
 		mat4 rot = RotateY(rotNew.x) * RotateX(rotNew.y);
 		mat4 tran = Translate(tranNew);
-		return persp * tran * rot;
+		return tran * rot;
+	}
+	mat4 persp() {
+		float aspectRatio = (float)width / (float)height;
+		return Perspective(fov, aspectRatio, nearDistance, farDistance);
 	}
 	void MouseDown(int x, int y) {
 		mouseDown = vec2((float)x, (float)y);

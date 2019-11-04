@@ -12,9 +12,8 @@
 GLuint vBuffer = 0;  
 GLuint program = 0;   
 
-
 int initialWinWidth =  500, initialWinHeight = 500;
-Camera camera(initialWinWidth / 2, initialWinHeight, vec3(0, 0, 0), vec3(0, 0, -1), (float)30);
+Camera camera(initialWinWidth, initialWinHeight, vec3(0, 0, 0), vec3(0, 0, -1), (float)30);
 
 void MouseButton(GLFWwindow* w, int butn, int action, int mods) {
     if (action == GLFW_PRESS) {
@@ -43,20 +42,42 @@ struct Vertex {
 };
 Vertex vertices[24];
 
-// Cube
+// Cube Data
 float l = -1, r = 1, b = -1, t = 1, n = -1, f = 1;
 float points[][3] = { {l,b,n},{l,b,f},{l,t,n},{l,t,f},{r,b,n},{r,b,f},{r,t,n},{r,t,f} };
 float colors[][3] = { {0,0,1},{0,1,0},{0,1,1},{1,0,0},{1,0,1},{1,1,0},{0,0,0},{1,1,1} };
 int faces[][4] = { {1,3,2,0},{6,7,5,4},{4,5,1,0},{3,7,6,2},{2,6,4,0},{5,7,3,1} };
 float cubeSize = .05f, cubeStretch = cubeSize;
 
+void InitVertexBuffer() {
+	// create vertex array
+	int nvrts = sizeof(faces) / sizeof(int), nfaces = nvrts / 4;
+	//printf("In InitVertexBuffer() nvrts = %d nfaces = %d\n", nvrts, nfaces);
+	int vsize = sizeof(Vertex);
+	for (int i = 0; i < nfaces; i++) {
+		int* f = faces[i];
+		vec3 p1(points[f[0]]), p2(points[f[1]]), p3(points[f[2]]);
+		vec3 n = normalize(cross(p3 - p2, p2 - p1));
+		for (int k = 0; k < 4; k++) {
+			int vid = f[k];
+			int vertIndex = 4 * i + k;
+			vertices[vertIndex] = Vertex(vec3(points[vid]), vec3(colors[vid]), n);
+			//printf("VertIndex: %d X: %f Y: %f Z: %f\n", vertIndex, vertices[vertIndex].point.x, vertices[vertIndex].point.y, vertices[vertIndex].point.z);
+		}
+	}
+	// create and bind GPU vertex buffer, copy vertex data
+	glGenBuffers(1, &vBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vBuffer);
+	glBufferData(GL_ARRAY_BUFFER, nvrts * vsize, &vertices[0], GL_STATIC_DRAW);
+}
+
 void Display(GLFWwindow *w) {
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	int screenWidth, screenHeight;
 	glfwGetWindowSize(w, &screenWidth, &screenHeight);
-	int halfWidth = screenWidth / 2;
-	camera.setWindowDim(halfWidth, screenHeight);
+	//int halfWidth = screenWidth / 2;
+	camera.setWindowDim(screenWidth, screenHeight);
 	
     // clear to gray, use app's shader
     glClearColor(.5, .5, .5, 1);
@@ -73,35 +94,9 @@ void Display(GLFWwindow *w) {
 	SetUniform(program, "modelview", modelview);
 	SetUniform(program, "persp", persp);
 	SetUniform(program, "lightVec", vec3(.7f, .4f, -.2f));
-	glViewport(0, 0, halfWidth, screenHeight);
+	glViewport(0, 0, screenWidth, screenHeight);
 	glDrawArrays(GL_QUADS, 0, sizeof(vertices) / sizeof(Vertex));
-	//glDrawElements(GL_QUADS, sizeof(faces) / sizeof(int), GL_UNSIGNED_INT, faces);
-	glViewport(halfWidth, 0, halfWidth, screenHeight);
-	glLineWidth(5);
-	for (int i = 0; i < 6; i++)
-		glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_INT, &faces[i]);
 	glFlush();
-}
-
-void InitVertexBuffer() {
-    // create vertex array
-	int nvrts = sizeof(faces) / sizeof(int), nfaces = nvrts / 4;
-	int vsize = sizeof(Vertex);
-	for (int i = 0; i < nfaces; i++) {
-		int* f = faces[i];
-		vec3 p1(points[f[0]]), p2(points[f[1]]), p3(points[f[2]]);
-		vec3 n = normalize(cross(p3 - p2, p2 - p1));
-		for (int k = 0; k < 3; k++) {
-			int vid = f[k];
-			vertices[4 * i + k] = Vertex(vec3(points[vid]), vec3(colors[vid]), n);
-		}
-	}
-
-	
-	// create and bind GPU vertex buffer, copy vertex data
-    glGenBuffers(1, &vBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vBuffer);
-    glBufferData(GL_ARRAY_BUFFER, nvrts*vsize, &vertices[0], GL_STATIC_DRAW);
 }
 
 bool InitShader() { 

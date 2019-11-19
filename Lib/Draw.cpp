@@ -1,6 +1,6 @@
 // Draw.cpp - various draw operations
 
-#include <glad.4.3.h>
+#include <glad.h>
 #include <gl/glu.h>
 #include "Draw.h"
 #include "GLXtras.h"
@@ -212,7 +212,7 @@ void Disk(vec3 p, float diameter, vec3 color, float opacity) {
 #ifdef GL_POINT_SMOOTH
 	glEnable(GL_POINT_SMOOTH);
 #else
-	glEnable(GL_POINT_SPRITE);
+	//glEnable(GL_POINT_SPRITE);
 	glEnable(0x8861); // same as GL_POINT_SMOOTH [this is a 4.5 core bug]
 #endif
 	glDrawArrays(GL_POINTS, 0, 1);

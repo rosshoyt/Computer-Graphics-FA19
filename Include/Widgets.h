@@ -1,4 +1,4 @@
-// Widgets.h: Cursor Support, Mover, Aimer, Arcball, Framer, Toggler, Magnifier
+// Widgets.h: Cursor Support, Mover, Joystick, Arcball, Framer, Toggler, Magnifier
 
 #ifndef WIDGETS_HDR
 #define WIDGETS_HDR
@@ -34,22 +34,26 @@ private:
 friend class Framer;
 };
 
-// Aimer: adjust selected vector, along sphere centered at vector base
+// Joystick: adjust selected vector, along sphere centered at vector base
 
-class Aimer {
+class Joystick {
 public:
-	Aimer();
-	Aimer(vec3 *b, vec3 *v);
+	Joystick();
+	Joystick(vec3 *b, vec3 *v, float arrowScale = 1, vec3 color = vec3(0,0,0));
 	bool Hit(int x, int y, mat4 fullview);
     void Down(int x, int y, vec3 *b, vec3 *v, mat4 modelview, mat4 persp);
     void Drag(int x, int y, mat4 modelview, mat4 persp);
 	void Draw(vec3 color, mat4 modelview, mat4 persp);
-private:
-	bool  hit;
+	void SetVector(vec3 v);
+	void SetBase(vec3 b);
 	vec3 *base, *vec;				// pointers to client data
+private:
+	float arrowScale;
+	vec3 color;
+	enum {A_None, A_Base, A_Tip} mode;
     float plane[4];
 	bool fwdFace;
-	enum {A_None, A_Base, A_Tip} mode;
+	bool  hit;
 };
 
 // Arcball: quaternion rotation of reference frame with trackball-like UI
@@ -68,13 +72,15 @@ public:
     void Drag(int x, int y);
     void Up();
     void Wheel(float direction, bool shift);
-	void Draw(mat4 fullview);
+	void Draw();	// should be in screen mode
 	mat4 *GetMatrix();
+	Quaternion GetQ();
 	vec2 center;				// display center (should be private)
 	float radius, scale;		// display radius, scale of m on input (should be private)
 private:
 	mat4 *m;					// matrix to adjust (upper 3x3 only)
 	Quaternion qstart;			// quaternion representing m on mouse down
+	Quaternion qq;				// qstart multiplied by mouse drag
 	vec2 mouseDown, mouseMove;	// ball hits on mouse down/drag, in pixels
 	vec3 BallV(vec2 mouse);		// vector from origin to mouse ballpick
 friend class Framer;
@@ -129,7 +135,7 @@ public:
 	void Down(int x, int y);
 	void Drag(int x, int y);
 	bool Hit(int x, int y);
-	void Display(int2 displayLoc);
+	void Display(int2 displayLoc, bool showSrcWindow = true);
 };
 
 #endif

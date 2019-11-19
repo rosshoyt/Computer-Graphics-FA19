@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define USE_TEXT
+// #define USE_TEXT
 
 #ifdef USE_TEXT
 	#include "Text.h"
@@ -102,7 +102,8 @@ void Framer::Wheel(float direction, bool shift) { arcball.Wheel(direction, shift
 
 void Framer::Draw(mat4 fullview) {
 	if (arcball.m) {
-		arcball.Draw(fullview);
+		UseDrawShader(ScreenMode());
+		arcball.Draw();
 		// draw center
 		UseDrawShader(fullview);
 		Disk(base, 10, vec3(1,0,0));
@@ -160,7 +161,7 @@ void Arcball::Drag(int x, int y) {
 	vec3 axis = cross(v2, v1);
 	if (dot(axis, axis) > .000001f) {
 		Quaternion qrot(axis, (float) acos((double) dot(v1, v2)));
-		Quaternion q = qstart*qrot;
+		Quaternion q = qq = qstart*qrot;
 		mat3 m3 = q.Get3x3();
 		for (int i = 0; i < 3; i++)
 			for (int j = 0; j < 3; j++)
@@ -176,9 +177,11 @@ void Arcball::Wheel(float direction, bool shift) {
 
 mat4 *Arcball::GetMatrix() { return m; }
 
-void Arcball::Draw(mat4 fullview) {
+Quaternion Arcball::GetQ() { return qq; }
+
+void Arcball::Draw() {
 	if (m) {
-		UseDrawShader(ScreenMode());
+//		UseDrawShader(ScreenMode());
 		vec3 v1 = BallV(mouseDown), v2 = BallV(mouseMove), s1;
 		// draw arc
 		if (length(mouseDown-mouseMove) > 2) {
@@ -199,7 +202,7 @@ void Arcball::Draw(mat4 fullview) {
 			Line(p1, p2, 2, vec3(1, .2f, .8f)); // 1,0,0));
 			p1 = p2;
 		}
-		UseDrawShader(fullview); // ?? ***
+//		UseDrawShader(fullview); // ?? ***
 	}
 }
 
@@ -221,6 +224,22 @@ void Mover::Down(vec3 *p, int x, int y, mat4 modelview, mat4 persp) {
 void Mover::Drag(int xMouse, int yMouse, mat4 modelview, mat4 persp) {
 	if (!point)
 		return;
+	vec3 p1, p2, axis;
+	float x = xMouse+mouseOffset.x, y = yMouse+mouseOffset.y;
+	//ScreenLine((float) x, (float) y, modelview, persp, p1, p2);
+	// get two points that transform to pixel x,y
+	axis = p2-p1;
+	// direction of line through p1
+	float pdDot = dot(axis, plane);
+	// project onto plane normal
+	float a = (-plane[3]-dot(p1, plane))/pdDot;
+	// intersection of line with plane
+	*point = p1+a*axis;
+}
+/*
+void Mover::Drag(int xMouse, int yMouse, mat4 modelview, mat4 persp) {
+	if (!point)
+		return;
 	float p1[3], p2[3], axis[3];
 	float x = xMouse+mouseOffset.x, y = yMouse+mouseOffset.y;
 	ScreenLine((float) x, (float) y, modelview, persp, p1, p2);
@@ -234,7 +253,7 @@ void Mover::Drag(int xMouse, int yMouse, mat4 modelview, mat4 persp) {
 	// intersection of line with plane
 	for (int j = 0; j < 3; j++)
 		(*point)[j] = p1[j]+a*axis[j];
-}
+} */
 
 bool Mover::Hit(int x, int y, mat4 &view, int proximity) {
 	return MouseOver(x, y, *point, view, proximity);
@@ -246,22 +265,19 @@ void Mover::Unset() { point = NULL; }
 
 Mover::Mover() { }
 
-// Aimer
+// Joystick
 
-Aimer::Aimer()  { mode = A_None; }
+Joystick::Joystick()  { mode = A_None; }
 
-Aimer::Aimer(vec3 *b, vec3 *v) {
-	base = b;
-	vec = v;
-	mode = A_None;
-}
+Joystick::Joystick(vec3 *b, vec3 *v, float arrowScale, vec3 color) :
+	base(b), vec(v), arrowScale(arrowScale), color(color), mode(A_None) { }
 
-bool Aimer::Hit(int x, int y, mat4 fullview) {
+bool Joystick::Hit(int x, int y, mat4 fullview) {
 	return ScreenDistSq(x, y, *base, fullview) < 100 ||
 		   ScreenDistSq(x, y, *base+*vec, fullview) < 100;
 }
 
-void Aimer::Down(int x, int y, vec3 *b, vec3 *v, mat4 modelview, mat4 persp) {
+void Joystick::Down(int x, int y, vec3 *b, vec3 *v, mat4 modelview, mat4 persp) {
 	mat4 fullview = persp*modelview;
 	mode = A_None;
 	base = b;
@@ -273,9 +289,9 @@ void Aimer::Down(int x, int y, vec3 *b, vec3 *v, mat4 modelview, mat4 persp) {
 		SetPlane(*base, x, y, modelview, persp, plane);
 }
 
-void Aimer::Drag(int x, int y, mat4 modelview, mat4 persp) {
+void Joystick::Drag(int x, int y, mat4 modelview, mat4 persp) {
 	vec3 p1, p2;										// p1p2 is world-space line that xforms to line perp to screen at (x, y)
-	ScreenLine((float) x, (float) y, modelview, persp, (float *) &p1, (float *) &p2);
+	//ScreenLine((float) x, (float) y, modelview, persp, p1, p2);
 	if (mode == A_Base) {
 		vec3 axis(p2-p1);								// direction of line through p1
 		vec3 normal(plane[0], plane[1], plane[2]);
@@ -300,19 +316,23 @@ void Aimer::Drag(int x, int y, mat4 modelview, mat4 persp) {
 	}
 }
 
-void Aimer::Draw(vec3 color, mat4 modelview, mat4 persp) {
+void Joystick::Draw(vec3 color, mat4 modelview, mat4 persp) {
 	bool frontFacing = FrontFacing(*base, *vec, modelview);
 	UseDrawShader(persp*modelview);
-	if (!frontFacing) {
-		glEnable(GL_LINE_STIPPLE);
-		glLineStipple(6, 0xAAAA);
-	}
+	//if (!frontFacing) {
+	//	glEnable(GL_LINE_STIPPLE);
+	//	glLineStipple(6, 0xAAAA);
+	//}
 //	ArrowV(base, len*v, modelview, color, NULL, 10);
 	Line(*base, *base+*vec, 5, color);
-	glDisable(GL_LINE_STIPPLE);
+	//glDisable(GL_LINE_STIPPLE);
 	Disk(*base, 12, vec3(1,0,1));
 	Disk(*base+*vec, 12, vec3(1,0,1));
 }
+
+void Joystick::SetVector(vec3 v) { *vec = v; }
+
+void Joystick::SetBase(vec3 b) { *base = b; }
 
 // Toggler
 
@@ -347,7 +367,10 @@ const char *Toggler::Name() { return name.c_str(); }
 
 // Magnifier
 
-Magnifier::Magnifier(int2 srcLoc, int2 dspSize, int blockSize) : srcLoc(srcLoc), displaySize(dspSize), blockSize(blockSize) { }
+Magnifier::Magnifier(int2 srcLoc, int2 dspSize, int blockSize) : srcLoc(srcLoc), blockSize(blockSize) {
+	int nxBlocks = dspSize[0]/blockSize, nyBlocks = dspSize[1]/blockSize;
+	displaySize = int2(nxBlocks*blockSize, nyBlocks*blockSize);
+}
 
 void Magnifier::Down(int x, int y) {
 	srcLocSave = srcLoc;
@@ -361,26 +384,29 @@ void Magnifier::Drag(int x, int y) {
 
 bool Magnifier::Hit(int x, int y) {
 	int nxBlocks = displaySize[0]/blockSize, nyBlocks = displaySize[1]/blockSize;
-	return x >= srcLoc[0] && y >= srcLoc[1] && x <= srcLoc[0]+nxBlocks && y <= srcLoc[1]+nyBlocks;
+	return x >= srcLoc[0] && y >= srcLoc[1] && x <= srcLoc[0]+nxBlocks-1 && y <= srcLoc[1]+nyBlocks-1;
 }
 
-void Magnifier::Display(int2 displayLoc) {
+void Magnifier::Display(int2 displayLoc, bool showSrcWindow) {
 	class Helper { public:
 		void Rect(int x, int y, int w, int h, bool solid, vec3 col) {
 			vec3 p0(x, y, 0), p1(x+w, y, 0), p2(x+w, y+h, 0), p3(x, y+h, 0);
-			Quad(p0, p1, p2, p3, solid, col, 1, 1);
+			Quad(p0, p1, p2, p3, solid, col, 1, 2);
 		}
 	} h;
-	const int nxBlocks = displaySize[0]/blockSize, nyBlocks = displaySize[1]/blockSize;
-	float pixels[nxBlocks][nyBlocks][3];
+	int nxBlocks = displaySize[0]/blockSize, nyBlocks = displaySize[1]/blockSize;
+	int dy = displaySize[1]-nyBlocks*blockSize;
+	float *pixels = new float[nxBlocks*nyBlocks*3];
 	glReadPixels(srcLoc[0], srcLoc[1], nxBlocks, nyBlocks, GL_RGB, GL_FLOAT, pixels);
 	for (int i = 0; i < nxBlocks; i++)
 		for (int j = 0; j < nyBlocks; j++) {
-			float *pixel = pixels[j][i];
+			float *pixel = pixels+3*(i*nyBlocks+j);
 			vec3 col(pixel[0], pixel[1], pixel[2]);
-			h.Rect(displayLoc[0]+blockSize*i, displayLoc[1]+blockSize*j, blockSize, blockSize, true, col);
+			h.Rect(displayLoc[0]+blockSize*i, displayLoc[1]+blockSize*j+dy, blockSize, blockSize, true, col);
 		}
 	glDisable(GL_BLEND);
-	h.Rect(srcLoc[0], srcLoc[1], nxBlocks-1, nyBlocks-1, false, vec3(0,1,1));
-	h.Rect(displayLoc[0], displayLoc[1], displaySize[0], displaySize[1], false, vec3(0,1,1));
+	if (showSrcWindow)
+		h.Rect(srcLoc[0], srcLoc[1], nxBlocks-1, nyBlocks-1, false, vec3(0, 1, 1));
+	h.Rect(displayLoc[0], displayLoc[1]+dy, nxBlocks*blockSize, nyBlocks*blockSize, false, vec3(0, 1, 1));
+	delete [] pixels;
 }

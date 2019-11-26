@@ -90,8 +90,11 @@ void SetVertices(int res, bool init = false) {
 	int sizeBuffer = 2*4*nQuadrilaterals*sizeof(vec3);
 	if (init)
 		glBufferData(GL_ARRAY_BUFFER, sizeBuffer, NULL, GL_STATIC_DRAW);
-	*** // set the 4 vertices for each quadrilateral and save to GPU
-	// HERE
+	// set the 4 vertices for each quadrilateral and save to GPU
+	float vals[] = { -.75, -.25, .25, .75 };
+	for (int i = 0; i < 4; ++i)
+		for (int j = 0; j < 4; ++j)
+			ctrlPts[i][j] = vec3(vals[i], vals[j], i % 3 == 0 || j % 3 == 0 ? .5 : 0);
 }
 
 // display
@@ -192,8 +195,56 @@ void MouseMove(GLFWwindow *w, double x, double y) {
 void MouseWheel(GLFWwindow *w, double xoffset, double yoffset) {
 	camera.MouseWheel((int) yoffset);
 }
+void BezierPatch(float s, float t, vec3* point, vec3* normal) {
+	vec3 spts[4], tpts[4];
+	for (int i = 0; i < 4; i++) {
+		spts[i] = BezPoint(s, ctrlPts[i][0], ctrlPts[i][1],
+			ctrlPts[i][2], ctrlPts[i][3]);
+		tpts[i] = BezPoint(t, ctrlPts[0][i], ctrlPts[1][i],
+			ctrlPts[2][i], ctrlPts[3][i]);
+	}
+	*point = BezPoint(t, spts[0], spts[1], spts[2], spts[3]);
+	vec3 tTan = BezTangent(t, spts[0], spts[1], spts[2], spts[3]);
+	vec3 sTan = BezTangent(s, tpts[0], tpts[1], tpts[2], tpts[3]);
+	*normal = normalize(cross(sTan, tTan));
+};
+vec3 PointFromCtrlPts(float s, float t) {
 
+	vec3 spt[4];
+
+	for (int i = 0; i < 4; i++)
+		spt[i] =
+		BezierPoint(s, ctlPt[i][0], ctlPt[i][1], ctlPt[i][2], ctlPt[i][3]);
+	return BezierPoint(t, spt[0], spt[1], spt[2], spt[3]);
+
+}
+
+
+vec3 PointFromCoeffs(float s, float t) {
+	vec3 p;
+
+	float s2 = s * s, s3 = s * s2, t2 = t * t, ta[] = { t * t2, t2, t, 1 };
+
+	for (int i = 0; i < 4; i++)
+		p +=
+		ta[i] * (s3 * coeff[i][0] + s2 * coeff[i][1] + s * coeff[i][2] + coeff[i][3]);
+	return p;
+}
+void BezierPatch(float s, float t, vec3 *point, vec3 *normal) {
+        vec3 spts[4], tpts[4];
+        for (int i = 0; i < 4; i++) {
+                spts[i] = BezPoint(s, ctrlPts[i][0], ctrlPts[i][1],
+ctrlPts[i][2], ctrlPts[i][3]);
+                tpts[i] = BezPoint(t, ctrlPts[0][i], ctrlPts[1][i],
+ctrlPts[2][i], ctrlPts[3][i]);
+        }
+        *point = BezPoint(t, spts[0], spts[1], spts[2], spts[3]);
+        vec3 tTan = BezTangent(t, spts[0], spts[1], spts[2], spts[3]);
+        vec3 sTan = BezTangent(s, tpts[0], tpts[1], tpts[2], tpts[3]);
+        *normal = normalize(cross(sTan, tTan));
+};
 // patch
+
 
 void DefaultControlPoints() {
 	vec3 p0(.5f, -.25f, 0), p1(.5f, .25f, 0), p2(-.5f, -.25f, 0), p3(-.5f, .25f, 0);

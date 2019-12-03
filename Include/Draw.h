@@ -11,7 +11,7 @@ mat4 Viewport();
 	// create matrix to map NDC space to pixel space, inverse of ScreenMode
 mat4 ScreenMode();
 	// create matrix to map pixel space, (0,0)-(width,height), to NDC (clip) space, (-1,-1)-(1,1)
-bool IsVisible(vec3 p, mat4 fullview, vec2 *screen = NULL, int *w = NULL, int *h = NULL);
+bool IsVisible(vec3 p, mat4 fullview, vec2 *screen = NULL, int *w = NULL, int *h = NULL, float fudge = 0);
 	// if the depth test is enabled, is point p visible?
 	// if non-null, set screen location (in pixels) of transformed p
 	// **** this is slow when used during rendering!
@@ -19,10 +19,10 @@ vec2 ScreenPoint(vec3 p, mat4 m, float *zscreen = NULL);
 	// transform 3D point to location (xscreen, yscreen), in pixels; if non-null, set zscreen
 	// uses current GL viewport
 void ScreenRay(float xscreen, float yscreen, mat4 modelview, mat4 persp, vec3 &p, vec3 &v);
-void ScreenLine(float xscreen, float yscreen, mat4 modelview, mat4 persp, float p1[], float p2[]);
+void ScreenLine(float xscreen, float yscreen, mat4 modelview, mat4 persp, vec3 &p1, vec3 &p2);
     // compute 3D world space line, given by p1 and p2, that transforms
     // to a line perpendicular to the screen at pixel (xscreen, yscreen)
-    // current viewport matters
+    // uses current viewport
 float ScreenDistSq(int x, int y, vec3 p, mat4 m, float *zscreen = NULL);
 float ScreenDistSq(double x, double y, vec3 p, mat4 m, float *zscreen = NULL);
 	// return distance squared, in pixels, between screen point (x, y) and point p xformed by view matrix

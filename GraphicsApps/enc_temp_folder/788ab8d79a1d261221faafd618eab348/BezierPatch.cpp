@@ -165,7 +165,7 @@ void Display() {
 			//Line(ctrlPts[i][j], ctrlPts[(i + 1) % 4][j + 1 % 4], 1.0f, 0.0f, 1.0f);
 		}
 	}
-	
+  
 	
 	
 	glFlush();

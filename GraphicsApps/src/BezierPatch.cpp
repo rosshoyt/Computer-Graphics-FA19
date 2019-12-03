@@ -137,6 +137,7 @@ void Display() {
     glClear(GL_DEPTH_BUFFER_BIT);
 	// invoke Phong shader
 	glUseProgram(shader);
+
 	// send matrices to vertex shader
 	SetUniform(shader, "modelview", camera.modelview);
 	SetUniform(shader, "persp", camera.persp);
